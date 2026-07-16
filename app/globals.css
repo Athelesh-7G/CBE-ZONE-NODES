@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  height: 100%;
+  background: #0f0f0f;
+  color: #e5e5e5;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Keep the sidebar scrollbar from clashing with the dark panel. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3f3f46 transparent;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 300ms ease-out both;
+}
+
+/*
+ * Path edges draw themselves from the source end. `--edge-len` is the line's
+ * pixel length, set per element so the dash can be offset by exactly one
+ * stroke's worth and then wound back to zero.
+ */
+@keyframes drawEdge {
+  from {
+    stroke-dashoffset: var(--edge-len);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.edge-draw {
+  animation: drawEdge 0.4s ease-out both;
+}
+
+/* Ring that expands out of the source/destination node and fades. */
+@keyframes pulseRing {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+.pulse-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulseRing 1.6s ease-out infinite;
+}
+
+.node-circle {
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.8));
+  transition: fill 0.15s ease, r 0.15s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .edge-draw,
+  .pulse-ring {
+    animation: none;
+  }
+  .edge-draw {
+    stroke-dashoffset: 0;
+  }
+}
