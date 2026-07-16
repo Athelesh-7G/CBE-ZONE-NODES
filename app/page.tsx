@@ -63,10 +63,19 @@ export default function Page() {
     null
   )
 
+  const [selected, setSelected] = useState<string | null>(null)
+
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 })
   const [natural, setNatural] = useState({ w: 3000, h: 2122 })
+
+  // Resolved on the client only: `window` does not exist during prerender, and
+  // reading it while rendering would also desync hydration.
+  const [isTouchDevice, setIsTouchDevice] = useState(false)
+  useEffect(() => {
+    setIsTouchDevice("ontouchstart" in window)
+  }, [])
 
   const clearTimers = useCallback(() => {
     timers.current.forEach(clearTimeout)
@@ -99,6 +108,16 @@ export default function Page() {
   // every node at the origin. Hold the overlay back for that first frame.
   const measured = rect.width > 0 && rect.height > 0
 
+  // Narrow map area: thin out the overlay so the markers stay legible. Derived
+  // from the container rather than the viewport, since the map is what crowds.
+  const isMobile = measured && containerSize.w < 500
+  // Shrink markers proportionally below 500px, bottoming out at 0.8 (r 10 -> 8).
+  const markerScale = isMobile
+    ? Math.max(0.8, Math.min(1, containerSize.w / 500))
+    : 1
+  const nodeRadius = 10 * markerScale
+  const keyRadius = 13 * markerScale
+
   const reset = useCallback(() => {
     clearTimers()
     setResult(null)
@@ -107,6 +126,7 @@ export default function Page() {
     setRunning(false)
     setShowResults(false)
     setShowSteps(false)
+    setSelected(null)
   }, [clearTimers])
 
   const run = useCallback(() => {
@@ -212,20 +232,22 @@ export default function Page() {
   const noPath = showResults && result && !result.found
 
   return (
-    <main className="flex h-screen w-screen overflow-hidden bg-[#0f0f0f] text-neutral-200">
+    <main className="flex min-h-screen w-full flex-col bg-[#0f0f0f] text-neutral-200 md:h-screen md:w-screen md:flex-row md:overflow-hidden">
       {/* ---------------- Sidebar ---------------- */}
-      <aside className="flex h-full w-[280px] shrink-0 flex-col gap-5 overflow-y-auto border-r border-neutral-800 bg-[#141414] p-5">
-        <header className="flex items-center gap-3">
+      <aside className="order-2 flex max-h-[45vh] w-full flex-col gap-4 overflow-y-auto border-t border-neutral-800 bg-[#141414] p-3 md:order-1 md:h-full md:max-h-none md:w-[280px] md:shrink-0 md:gap-5 md:border-r md:border-t-0 md:p-5">
+        <header className="flex items-center gap-2 md:gap-3">
           <GraphIcon />
           <div>
-            <h1 className="text-base font-semibold leading-tight text-white">
+            <h1 className="text-sm font-semibold leading-tight text-white md:text-base">
               CBE Zone Map
             </h1>
-            <p className="text-xs text-neutral-500">Dijkstra&apos;s Algorithm</p>
+            <p className="text-[11px] text-neutral-500 md:text-xs">
+              Dijkstra&apos;s Algorithm
+            </p>
           </div>
         </header>
 
-        <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-1 md:gap-3">
           <Select
             label="Source"
             value={source}
@@ -241,43 +263,48 @@ export default function Page() {
         </div>
 
         <div className="space-y-2">
-          <button
-            onClick={run}
-            disabled={running || source === destination}
-            className="flex w-full items-center justify-center gap-2 rounded-md bg-[#22c55e] px-3 py-2 text-sm font-semibold text-black transition-colors duration-150 hover:bg-[#16a34a] disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {running ? (
-              <>
-                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-black/25 border-t-black" />
-                Running…
-              </>
-            ) : (
-              "Find Shortest Path"
-            )}
-          </button>
-          <button
-            onClick={reset}
-            className="w-full rounded-md border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm font-medium text-neutral-300 transition-colors duration-150 hover:bg-neutral-700"
-          >
-            Reset
-          </button>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-1">
+            <button
+              onClick={run}
+              disabled={running || source === destination}
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md bg-[#22c55e] px-3 py-2 text-sm font-semibold text-black transition-colors duration-150 hover:bg-[#16a34a] disabled:cursor-not-allowed disabled:opacity-40 md:min-h-0"
+            >
+              {running ? (
+                <>
+                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-black/25 border-t-black" />
+                  Running…
+                </>
+              ) : (
+                "Find Shortest Path"
+              )}
+            </button>
+            <button
+              onClick={reset}
+              className="min-h-[44px] w-full rounded-md border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm font-medium text-neutral-300 transition-colors duration-150 hover:bg-neutral-700 md:min-h-0"
+            >
+              Reset
+            </button>
+          </div>
           <button
             onClick={() => setShowSteps(true)}
             disabled={!result?.steps.length}
-            className="w-full rounded-md border border-neutral-700 px-3 py-2 text-sm font-medium text-neutral-400 transition-colors duration-150 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
+            className="min-h-[44px] w-full rounded-md border border-neutral-700 px-3 py-2 text-sm font-medium text-neutral-400 transition-colors duration-150 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40 md:min-h-0"
           >
             Step-by-step Table
           </button>
         </div>
 
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-neutral-400">
+        <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm text-neutral-400 md:min-h-0">
           <input
             type="checkbox"
             checked={showAllEdges}
             onChange={(e) => setShowAllEdges(e.target.checked)}
-            className="h-4 w-4 accent-[#22c55e]"
+            className="h-5 w-5 accent-[#22c55e] md:h-4 md:w-4"
           />
           Show All Edges
+          {isMobile && (
+            <span className="text-[10px] text-neutral-600">(weights: path only)</span>
+          )}
         </label>
 
         {source === destination && (
@@ -313,7 +340,7 @@ export default function Page() {
                 {result.path.map((id, i) => (
                   <span key={id} className="flex items-center gap-1">
                     {i > 0 && <span className="text-neutral-600">→</span>}
-                    <span className="rounded-full bg-[#22c55e]/15 px-2 py-0.5 text-[11px] font-medium text-[#22c55e]">
+                    <span className="rounded-full bg-[#22c55e]/15 px-2 py-0.5 text-xs font-medium text-[#22c55e] md:text-[11px]">
                       {nodeName(id)}
                     </span>
                   </span>
@@ -323,9 +350,9 @@ export default function Page() {
 
             <div className="rounded-md bg-[#22c55e]/10 p-3">
               <p className="text-xs text-neutral-400">Total Distance</p>
-              <p className="text-[32px] font-bold leading-tight text-[#22c55e]">
+              <p className="text-2xl font-bold leading-tight text-[#22c55e] md:text-[32px]">
                 {result.totalDistance}
-                <span className="ml-1 text-base font-semibold">km</span>
+                <span className="ml-1 text-sm font-semibold md:text-base">km</span>
               </p>
             </div>
 
@@ -360,7 +387,8 @@ export default function Page() {
           </section>
         )}
 
-        <div className="mt-auto space-y-1.5 border-t border-neutral-800 pt-4 text-[11px] text-neutral-500">
+        {/* Horizontal scroller on mobile, stacked list on desktop. */}
+        <div className="mt-auto flex gap-3 overflow-x-auto border-t border-neutral-800 pt-3 text-[11px] text-neutral-500 md:flex-col md:gap-1.5 md:overflow-x-visible md:pt-4">
           <Legend color={COLOR.source} label="Source" />
           <Legend color={COLOR.destination} label="Destination" />
           <Legend color={COLOR.waypoint} label="On path" />
@@ -369,7 +397,10 @@ export default function Page() {
       </aside>
 
       {/* ---------------- Map ---------------- */}
-      <div ref={containerRef} className="relative h-full flex-1">
+      <div
+        ref={containerRef}
+        className="relative order-1 min-h-[55vw] w-full flex-1 md:order-2 md:h-full md:min-h-0"
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/zone_map.png"
@@ -444,7 +475,9 @@ export default function Page() {
                       : undefined
                   }
                 />
-                {(showAllEdges || onPath) && (
+                {/* On a narrow map the weight pills are unreadable clutter, so
+                    only the path's own weights survive there. */}
+                {((showAllEdges && !isMobile) || onPath) && (
                   <WeightLabel
                     x={(x1 + x2) / 2}
                     y={(y1 + y2) / 2}
@@ -462,18 +495,27 @@ export default function Page() {
             const cy = py(n.y)
             const isKey = n.id === source || n.id === destination
             const fill = nodeFill(n.id)
+            const r = isKey ? keyRadius : nodeRadius
+            // Narrow maps only caption the nodes that carry meaning; the rest
+            // would overlap into an unreadable mess.
+            const showLabel = !isMobile || isKey || revealedPathNodes.has(n.id)
             return (
               <g
                 key={n.id}
-                onMouseEnter={() => setHovered({ id: n.id, x: cx, y: cy })}
-                onMouseLeave={() => setHovered(null)}
+                onMouseEnter={
+                  isTouchDevice
+                    ? undefined
+                    : () => setHovered({ id: n.id, x: cx, y: cy })
+                }
+                onMouseLeave={isTouchDevice ? undefined : () => setHovered(null)}
+                onClick={() => setSelected(n.id)}
                 className="cursor-pointer"
               >
                 {isKey && (
                   <circle
                     cx={cx}
                     cy={cy}
-                    r={13}
+                    r={keyRadius}
                     fill="none"
                     stroke={fill}
                     strokeWidth={2}
@@ -483,15 +525,23 @@ export default function Page() {
                 <circle
                   cx={cx}
                   cy={cy}
-                  r={isKey ? 13 : 10}
+                  r={r}
                   fill={fill}
                   stroke="#0f0f0f"
                   strokeWidth={2}
                   className="node-circle"
                 />
-                <NodeLabel x={cx} y={cy} text={n.name} offset={isKey ? 3 : 0} />
-                {/* Generous invisible hit area for hovering. */}
-                <circle cx={cx} cy={cy} r={18} fill="transparent" />
+                {showLabel && (
+                  <NodeLabel
+                    x={cx}
+                    y={cy}
+                    text={n.name}
+                    offset={isKey ? 3 : 0}
+                    compact={isMobile}
+                  />
+                )}
+                {/* Generous invisible hit/tap area. */}
+                <circle cx={cx} cy={cy} r={isMobile ? 16 : 18} fill="transparent" />
               </g>
             )
           })}
@@ -499,8 +549,8 @@ export default function Page() {
           )}
         </svg>
 
-        {/* Hover tooltip */}
-        {hovered && (
+        {/* Hover tooltip — pointer devices only; touch uses the info bar. */}
+        {hovered && !isTouchDevice && (
           <div
             className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-md border border-neutral-700 bg-neutral-900/95 px-2.5 py-1.5 text-xs shadow-xl"
             style={{ left: hovered.x, top: hovered.y - 34 }}
@@ -515,36 +565,61 @@ export default function Page() {
             )}
           </div>
         )}
+
+        {/* Touch info bar — the tap-driven stand-in for the hover tooltip. */}
+        {selected && isTouchDevice && (
+          <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-between gap-3 border-t border-neutral-800 bg-neutral-900/95 px-3 py-2 text-xs backdrop-blur-sm">
+            <p className="truncate">
+              <span className="font-semibold text-white">{nodeName(selected)}</span>
+              {result && (
+                <span className="text-neutral-400">
+                  {distanceFromSource(selected) !== null
+                    ? ` — ${distanceFromSource(selected)} km from ${nodeName(source)}`
+                    : " — unreachable"}
+                </span>
+              )}
+            </p>
+            <button
+              onClick={() => setSelected(null)}
+              aria-label="Dismiss"
+              className="shrink-0 rounded px-2 py-1 text-neutral-500 hover:bg-neutral-800"
+            >
+              ✕
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ---------------- Step table modal ---------------- */}
       {showSteps && result && (
         <div
-          className="fixed inset-0 z-20 flex items-center justify-center bg-black/70 p-8"
+          className="fixed inset-0 z-20 flex items-center justify-center bg-black/70 p-3 md:p-8"
           onClick={() => setShowSteps(false)}
         >
           <div
             className="flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-neutral-800 bg-[#141414]"
             onClick={(e) => e.stopPropagation()}
           >
-            <header className="flex items-center justify-between border-b border-neutral-800 px-5 py-3">
-              <div>
+            <header className="flex items-center justify-between gap-2 border-b border-neutral-800 px-3 py-3 md:px-5">
+              <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-white">Algorithm Trace</h2>
-                <p className="text-xs text-neutral-500">
+                <p className="truncate text-[11px] text-neutral-500 md:text-xs">
                   {nodeName(source)} → {nodeName(destination)} · each row is one
                   settled node
                 </p>
               </div>
               <button
                 onClick={() => setShowSteps(false)}
-                className="rounded px-2 py-1 text-sm text-neutral-400 hover:bg-neutral-800"
+                className="min-h-[44px] shrink-0 rounded px-3 py-1 text-sm text-neutral-400 hover:bg-neutral-800 md:min-h-0 md:px-2"
               >
                 Close
               </button>
             </header>
 
+            {/* The trace is too wide for a phone; let it scroll sideways
+                rather than crushing the columns. */}
             <div className="overflow-auto">
-              <table className="w-full border-collapse text-left text-xs">
+              <table className="w-full min-w-[560px] border-collapse text-left text-xs md:min-w-0">
                 <thead className="sticky top-0 bg-[#1c1c1c] text-neutral-400">
                   <tr>
                     <th className="px-4 py-2 font-medium">#</th>
@@ -634,11 +709,12 @@ function Select({
   return (
     <label className="block">
       <span className="mb-1 block text-xs font-medium text-neutral-500">{label}</span>
+      {/* 16px on mobile: iOS auto-zooms any select under that size on focus. */}
       <select
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-neutral-700 bg-neutral-900 px-2.5 py-2 text-sm text-neutral-100 outline-none transition focus:border-[#22c55e] disabled:opacity-50"
+        className="min-h-[44px] w-full rounded-md border border-neutral-700 bg-neutral-900 px-2.5 py-2 text-base text-neutral-100 outline-none transition focus:border-[#22c55e] disabled:opacity-50 md:min-h-0 md:text-sm"
       >
         {NODES.map((n) => (
           <option key={n.id} value={n.id}>
@@ -652,9 +728,9 @@ function Select({
 
 function Legend({ color, label }: { color: string; label: string }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
       <span
-        className="inline-block h-2.5 w-2.5 rounded-full"
+        className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
         style={{ backgroundColor: color }}
       />
       {label}
@@ -671,29 +747,34 @@ function NodeLabel({
   y,
   text,
   offset = 0,
+  compact = false,
 }: {
   x: number
   y: number
   text: string
   offset?: number
+  compact?: boolean
 }) {
-  const width = text.length * 5.6 + 10
+  const fontSize = compact ? 9 : 11
+  const height = compact ? 13 : 15
+  const width = text.length * (compact ? 4.7 : 5.6) + 10
+  const top = y + (compact ? 11 : 13) + offset
   return (
     <>
       <rect
         x={x - width / 2}
-        y={y + 13 + offset}
+        y={top}
         width={width}
-        height={15}
-        rx={7.5}
+        height={height}
+        rx={height / 2}
         fill="#0f0f0f"
         opacity={0.78}
       />
       <text
         x={x}
-        y={y + 23.5 + offset}
+        y={top + height / 2 + fontSize / 3}
         textAnchor="middle"
-        fontSize={11}
+        fontSize={fontSize}
         fill="#ffffff"
         style={{ userSelect: "none" }}
       >
