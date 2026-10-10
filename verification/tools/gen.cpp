@@ -34,18 +34,13 @@ int main(int argc, char** argv) {
   os << "# cbe_gen --seed " << seed << " --count " << count << " --max-n " << maxN << "\n";
   for (long long i = 0; i < count; ++i) {
     cbe::Rng rng(cbe::deriveSeed(seed, static_cast<std::uint64_t>(i)));
-    cbe::GenParams p;
-    p.n = static_cast<int>(rng.range(2, maxN));
-    p.density = 0.02 + 0.4 * rng.unit();
-    p.connected = rng.chance(0.6);
-    p.maxWeight = rng.chance(0.3) ? 1'000'000 : 30;
-    p.pZeroWeight = rng.chance(0.3) ? 0.15 : 0.0;
-    p.pParallel = rng.chance(0.3) ? 0.2 : 0.0;
-    const cbe::Graph g = cbe::randomGraph(rng, p);
+    const cbe::GeneratedCase gc = cbe::generateCase(rng, maxN);
+    const cbe::Graph& g = gc.graph;
     std::vector<cbe::Query> qs;
     for (int k = 0; k < nq; ++k)
-      qs.push_back({static_cast<int>(rng.below(static_cast<std::uint64_t>(p.n))),
-                    static_cast<int>(rng.below(static_cast<std::uint64_t>(p.n)))});
+      qs.push_back({static_cast<int>(rng.below(static_cast<std::uint64_t>(g.size()))),
+                    static_cast<int>(rng.below(static_cast<std::uint64_t>(g.size())))});
+    os << "# " << gc.label << "\n";
     cbe::writeBlock(os, "case-" + std::to_string(i), g, qs);
   }
   std::cout << "wrote " << count << " cases (seed " << seed << ") to " << out << "\n";

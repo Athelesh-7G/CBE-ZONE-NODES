@@ -21,13 +21,19 @@ endif()
 
 # Test sources are compiled once as objects and linked into each executable that
 # needs the registered tests (a static library would drop the static registrars).
+add_library(tt STATIC framework/tt/tinytest.cpp)
+target_link_libraries(tt PUBLIC cbe_options)
+
 add_library(cbe_suite OBJECT
   tests/test_solvers.cpp
-  tests/test_ts_bridge.cpp)
+  tests/test_ts_bridge.cpp
+  tests/test_framework.cpp
+  tests/test_generator.cpp
+  tests/test_properties.cpp)
 target_link_libraries(cbe_suite PUBLIC cbe_options)
 
 add_executable(cbe_tests framework/tt/main.cpp $<TARGET_OBJECTS:cbe_suite>)
-target_link_libraries(cbe_tests PRIVATE cbe_options)
+target_link_libraries(cbe_tests PRIVATE tt cbe_options)
 
 add_executable(cbe_gen tools/gen.cpp)
 target_link_libraries(cbe_gen PRIVATE cbe_options)

@@ -2,6 +2,8 @@
 // solvers. The TypeScript side is run by tests/cpp/export.ts and run_cases.ts;
 // this file only reads the files they wrote (pass --ts-dir <dir>).
 #include <fstream>
+#include <iostream>
+#include <set>
 
 #include "cbe/differential.hpp"
 #include "cbe/external_io.hpp"

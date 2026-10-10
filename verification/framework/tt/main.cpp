@@ -1,3 +1,3 @@
 #include "tt/tinytest.hpp"
 
-int main(int argc, char** argv) { return tt::runMain(argc, argv); }
+int main(int argc, char** argv) { return tt::mainEntry(argc, argv); }
