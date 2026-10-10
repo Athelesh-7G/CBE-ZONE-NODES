@@ -307,7 +307,9 @@ grid       49729     99012       622       3021.9      10662.2       6214.6     
 grid       99856    199080       885       6698.4      28539.2      16253.2     4.26
 ```
 
-Reading it: in C++ the binary heap is as fast as or faster than the ascending sorted array
+Timings vary a little between runs; a second run gave V = 16 sparse as heap 0.6 us,
+sorted-desc 0.7 us (reversed from the table), and 100,000 sparse as 13.9 ms heap vs
+3.68 s sorted-asc. Reading it: in C++ the binary heap is as fast as or faster than the ascending sorted array
 at every size measured (V = 16: 0.7 us vs 0.9 us on the sparse graph, 0.2 us vs 0.2 us on
 the grid), and the gap grows steadily with V. There is no
 crossover in this range. At V = 16, `sorted-desc` and the heap are within what I would
@@ -326,17 +328,24 @@ only; it is not part of the repo.
 
 ## Limits
 
+- It verifies a shortest-path implementation. It is not a compiler test suite.
+- It found no bugs in `lib/dijkstra.ts`: every check passed. The only failures it has
+  produced are the deliberate ones from injected mutants.
 - The real graph is fixed (16 nodes, 28 edges). Randomized graphs are generated, which
   samples a large space; it is not exhaustive. The 240-pair check is exhaustive only for
   that one graph.
 - The oracles are mine. Three independent solvers and the optimality certificate reduce
   the chance of a shared mistake; they do not remove it.
-- Mutation score is relative to a list of mutants I wrote. 12/12 does not mean the
+- The mutation score is relative to the 12 mutants I wrote. 12/12 does not mean the
   suite finds all bugs.
-- The fuzz target fuzzes the C++ harness, not `lib/dijkstra.ts`. TypeScript is exercised
+- The fuzz target fuzzes the C++ parser and solvers, not `lib/dijkstra.ts`. TypeScript is exercised
   through the seeded bridge only.
 - Graph model: undirected, integer weights 0 to 1e9, no self-loops. Path sums are
   assumed far below `kInf`; graphs near 2.3e9 nodes are out of scope.
+- Sanitizer, GCC, clang and fuzzing results above are what I observed on the machines
+  listed (macOS, and Linux in Docker). The GitHub Actions jobs in `.github/workflows/ci.yml`
+  had not been run on GitHub when this was written, so their results and run time are
+  not known; the sanitizer job is marked `continue-on-error` for that reason.
 - The framework `tt` is small on purpose (about 490 lines): no parallel execution, no
   output capture, no death tests.
 - This checks a shortest-path implementation. It is not a compiler test suite.

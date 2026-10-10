@@ -114,7 +114,10 @@ harness with three reference solvers, seeded random-graph and property tests,
 mutation testing, a test-case reducer, sanitizer builds and a fuzz target. It checks
 `lib/dijkstra.ts` on the real graph (all 240 ordered pairs) and on generated graphs.
 Run it with `npm run test:cpp` (needs CMake and a C++17 compiler); `npm run test:all`
-runs both suites. See that README for the exact counts and its limits.
+runs both suites. It checks a shortest-path implementation, not a compiler. It found no
+bugs in `lib/dijkstra.ts` (every check passed); its mutation score (12 of 12) is
+relative to 12 injected bugs I wrote; its fuzz target fuzzes the C++ parser and solvers,
+not the TypeScript. See that README for the exact counts and the full list of limits.
 
 ## Notes
 
