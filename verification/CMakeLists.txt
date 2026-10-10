@@ -37,7 +37,7 @@ add_library(cbe_suite OBJECT
 target_link_libraries(cbe_suite PUBLIC cbe_options)
 target_compile_definitions(cbe_suite PRIVATE CBE_CORPUS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/corpus")
 
-add_executable(cbe_tests framework/tt/main.cpp $<TARGET_OBJECTS:cbe_suite>)
+add_executable(cbe_tests tests/main_tests.cpp $<TARGET_OBJECTS:cbe_suite>)
 target_link_libraries(cbe_tests PRIVATE tt cbe_options)
 
 add_executable(cbe_gen tools/gen.cpp)

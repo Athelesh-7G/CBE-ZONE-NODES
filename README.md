@@ -105,6 +105,13 @@ Output of `npm test` (Node v24.17.0):
 CI (`.github/workflows/ci.yml`) runs `npm ci`, lint, test and build on every
 push and pull request.
 
+A second, independent check lives in [verification/](verification/README.md): a C++17
+harness with three reference solvers, seeded random-graph and property tests,
+mutation testing, a test-case reducer, sanitizer builds and a fuzz target. It checks
+`lib/dijkstra.ts` on the real graph (all 240 ordered pairs) and on generated graphs.
+Run it with `npm run test:cpp` (needs CMake and a C++17 compiler); `npm run test:all`
+runs both suites. See that README for the exact counts and its limits.
+
 ## Notes
 
 - Node coordinates are stored as fractions (0–1) of the map image and scaled to

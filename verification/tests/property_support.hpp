@@ -16,6 +16,7 @@
 #include "cbe/generator.hpp"
 #include "cbe/rng.hpp"
 #include "cbe/solvers.hpp"
+#include "cbe/uut.hpp"
 #include "tt/tinytest.hpp"
 
 namespace cbe_test {
@@ -32,8 +33,11 @@ struct Ctx {
   bool failed = false;
 
   std::string repro() const {
+    const std::string mutant = cbe::activeMutant() == cbe::Mutant::None
+                                   ? ""
+                                   : std::string(" --mutant ") + cbe::mutantName(cbe::activeMutant());
     return "[repro: --filter " + test + " --seed " + std::to_string(seed) + " --case " +
-           std::to_string(index) + " ; " + label + "] ";
+           std::to_string(index) + mutant + " ; " + label + "] ";
   }
 };
 
@@ -82,8 +86,9 @@ std::size_t forEachCase(const std::string& test, std::size_t defaultCases, Body&
 #define PROP_CHECK(ctx, cond, msg)                                       \
   do {                                                                   \
     if (!(cond)) {                                                       \
+      const bool first_ = !(ctx).failed; /* report one failure per case */ \
       (ctx).failed = true;                                               \
-      TT_EXPECT_MSG(false, (ctx).repro() << #cond << " | " << msg);      \
+      if (first_) TT_EXPECT_MSG(false, (ctx).repro() << #cond << " | " << msg); \
     }                                                                    \
   } while (0)
 
