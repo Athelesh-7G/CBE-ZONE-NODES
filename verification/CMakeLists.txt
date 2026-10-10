@@ -29,11 +29,21 @@ add_library(cbe_suite OBJECT
   tests/test_ts_bridge.cpp
   tests/test_framework.cpp
   tests/test_generator.cpp
-  tests/test_properties.cpp)
+  tests/test_properties.cpp
+  tests/test_uut.cpp
+  tests/test_reducer.cpp
+  tests/test_corpus.cpp)
 target_link_libraries(cbe_suite PUBLIC cbe_options)
+target_compile_definitions(cbe_suite PRIVATE CBE_CORPUS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/corpus")
 
 add_executable(cbe_tests framework/tt/main.cpp $<TARGET_OBJECTS:cbe_suite>)
 target_link_libraries(cbe_tests PRIVATE tt cbe_options)
 
 add_executable(cbe_gen tools/gen.cpp)
 target_link_libraries(cbe_gen PRIVATE cbe_options)
+
+add_executable(cbe_mutate tools/mutate.cpp $<TARGET_OBJECTS:cbe_suite>)
+target_link_libraries(cbe_mutate PRIVATE tt cbe_options)
+
+add_executable(cbe_reduce tools/reduce.cpp)
+target_link_libraries(cbe_reduce PRIVATE cbe_options)

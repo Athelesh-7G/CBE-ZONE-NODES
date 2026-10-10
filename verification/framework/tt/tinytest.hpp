@@ -18,7 +18,7 @@
 //   struct Fx : tt::Fixture { void SetUp() override {...} void TearDown() override {...} };
 //   TT_TEST_F(Fx, Name) { ... uses members of Fx ... }
 //
-// Command line (see tt::parseArgs): --filter PATTERN  --seed N  --junit FILE  --list
+// Command line (see tt::parseArgs): --filter PATTERN  --seed N  --junit FILE  --list  --fail-fast
 //   Any other "--key value" pair is stored and read with tt::option("key").
 #pragma once
 
@@ -38,6 +38,7 @@ struct Options {
   std::uint64_t seed = 1;   // master seed for randomized tests
   std::string junitPath;    // write JUnit XML here when non-empty
   bool list = false;        // only print test names
+  bool failFast = false;    // stop after the first failed or errored test
   std::map<std::string, std::string> extra;  // any other --key value pair
 };
 

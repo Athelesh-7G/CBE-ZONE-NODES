@@ -1,0 +1,8 @@
+# regression case reduced by cbe_reduce
+# mutant: skip-last-neighbor (never relax the last neighbor of a node)
+# found with --seed 1 case 0 (chain/zeros+parallel/n=18/m=20)
+# the correct implementation must answer query 0->1 correctly
+graph skip-last-neighbor
+2 1 1
+0 1 1
+0 1

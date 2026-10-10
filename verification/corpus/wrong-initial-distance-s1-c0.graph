@@ -1,0 +1,7 @@
+# regression case reduced by cbe_reduce
+# mutant: wrong-initial-distance (dist[source] starts at 1)
+# found with --seed 1 case 0 (chain/zeros+parallel/n=18/m=20)
+# the correct implementation must answer query 0->0 correctly
+graph wrong-initial-distance
+1 0 1
+0 0

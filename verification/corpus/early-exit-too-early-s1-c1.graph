@@ -1,0 +1,11 @@
+# regression case reduced by cbe_reduce
+# mutant: early-exit-too-early (stop when target first reached)
+# found with --seed 1 case 1 (complete/ties(1..3)/n=25/m=300)
+# the correct implementation must answer query 0->1 correctly
+graph early-exit-too-early
+4 4 1
+0 2 1
+0 3 1
+1 2 3
+1 3 1
+0 1

@@ -26,4 +26,11 @@ echo "== generate random cases (seed $SEED) and run them through lib/dijkstra.ts
 npx tsx tests/cpp/run_cases.ts "$OUT/random_cases.txt" "$OUT/ts_random_results.txt"
 
 echo "== run C++ suite"
-"$BUILD/cbe_tests" --ts-dir "$OUT" --seed "$SEED" --junit "$JUNIT"
+LOG="$OUT/suite.log"
+"$BUILD/cbe_tests" --ts-dir "$OUT" --seed "$SEED" --junit "$JUNIT" | tee "$LOG"
+awk '/random cases \(seed/ { total += $2 } END { printf "random generated cases executed by the suite: %d\n", total }' "$LOG"
+
+if [ "${CBE_MUTATION:-1}" = "1" ]; then
+  echo "== mutation testing (whole suite against every injected bug)"
+  "$BUILD/cbe_mutate" --ts-dir "$OUT" --seed "$SEED" --junit "${JUNIT%.xml}-mutation.xml"
+fi

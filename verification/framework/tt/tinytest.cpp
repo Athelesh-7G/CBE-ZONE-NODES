@@ -97,6 +97,10 @@ Options parseArgs(int argc, char** argv) {
       o.list = true;
       continue;
     }
+    if (key == "fail-fast") {
+      o.failFast = true;
+      continue;
+    }
     if (i + 1 >= argc) throw std::invalid_argument("missing value for " + a);
     const std::string value = argv[++i];
     if (key == "filter") {
@@ -186,7 +190,9 @@ RunSummary runCases(const std::vector<TestCase>& cases, const Options& opts, std
          << std::fixed << std::setprecision(1) << r.seconds * 1000 << " ms)\n";
     for (const std::string& f : r.failures) text << "        " << f << "\n";
     if (!r.note.empty()) text << "        " << r.note << "\n";
+    const bool bad = r.status == Status::Failed || r.status == Status::Errored;
     summary.results.push_back(std::move(r));
+    if (bad && opts.failFast) break;
   }
   summary.seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - runStart).count();
   text << summary.results.size() << " tests: " << summary.count(Status::Passed) << " passed, "

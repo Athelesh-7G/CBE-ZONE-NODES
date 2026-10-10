@@ -1,0 +1,9 @@
+# regression case reduced by cbe_reduce
+# mutant: wrong-predecessor (predecessor set to the grandparent)
+# found with --seed 1 case 0 (chain/zeros+parallel/n=18/m=20)
+# the correct implementation must answer query 0->2 correctly
+graph wrong-predecessor
+3 2 1
+0 1 1
+1 2 1
+0 2

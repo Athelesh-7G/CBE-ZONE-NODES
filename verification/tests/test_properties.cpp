@@ -6,6 +6,7 @@
 // a blind spot.
 #include <map>
 
+#include "cbe/uut.hpp"
 #include "property_support.hpp"
 
 namespace cbe_test {
@@ -14,11 +15,15 @@ namespace {
 cbe::DijkstraSolver g_dij;
 cbe::BellmanFordSolver g_bf;
 cbe::FloydWarshallSolver g_fw;
+cbe::UutSolver g_uut;
 const std::vector<const cbe::Solver*> g_refs = {&g_dij, &g_bf, &g_fw};
+const std::vector<const cbe::Solver*> g_judged = {&g_dij, &g_bf, &g_fw, &g_uut};
 }  // namespace
 
 const std::vector<const cbe::Solver*>& referenceSolvers() { return g_refs; }
-const std::vector<const cbe::Solver*>& solversUnderTest() { return g_refs; }
+// The references plus the mutable Dijkstra: whatever mutant is active is judged by
+// every property below.
+const std::vector<const cbe::Solver*>& solversUnderTest() { return g_judged; }
 
 }  // namespace cbe_test
 
