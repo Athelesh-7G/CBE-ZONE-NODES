@@ -99,7 +99,7 @@ Output of `npm test` (Node v24.17.0):
 ℹ suites 7
 ℹ pass 17
 ℹ fail 0
-ℹ duration_ms 102.580042
+ℹ duration_ms 107.872583
 ```
 
 CI (`.github/workflows/ci.yml`) runs `npm ci`, lint, test and build on every
@@ -113,3 +113,7 @@ push and pull request.
 - `public/zone_map.png` is rendered from `Zone Map.pdf`.
 - The zone tint rectangles are rough regions for orientation, not real ward
   boundaries.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
