@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "tsx --test tests/*.test.ts",
-    "test:cpp": "bash verification/scripts/test_cpp.sh"
+    "test:cpp": "bash verification/scripts/test_cpp.sh",
+    "test:all": "npm test && npm run test:cpp"
   },
   "dependencies": {
     "next": "14.2.35",

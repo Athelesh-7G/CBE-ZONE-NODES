@@ -34,3 +34,6 @@ if [ "${CBE_MUTATION:-1}" = "1" ]; then
   echo "== mutation testing (whole suite against every injected bug)"
   "$BUILD/cbe_mutate" --ts-dir "$OUT" --seed "$SEED" --junit "${JUNIT%.xml}-mutation.xml"
 fi
+
+echo "== replay fuzz seeds and the corpus through the fuzz entry point"
+"$BUILD/cbe_fuzz_replay" verification/fuzz/seeds/* verification/corpus/*.graph

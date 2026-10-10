@@ -17,3 +17,55 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+
+  # C++ verification suite (verification/): differential, property, mutation tests
+  # and the TypeScript bridge, under both g++ and clang++.
+  cpp:
+    name: cpp (${{ matrix.cxx }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cxx: [g++, clang++]
+    env:
+      CXX: ${{ matrix.cxx }}
+      CBE_BUILD_DIR: verification/build/${{ matrix.cxx }}
+      CBE_JUNIT: verification/build/junit-${{ matrix.cxx }}.xml
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run test:cpp
+      - name: Benchmark smoke test (checks the queues agree; timings are not asserted)
+        run: '"$CBE_BUILD_DIR/cbe_bench" --max-v 2048 --quick true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-${{ matrix.cxx }}
+          path: verification/build/junit-*.xml
+
+  # Same suite built with AddressSanitizer + UndefinedBehaviorSanitizer.
+  cpp-sanitizers:
+    runs-on: ubuntu-latest
+    env:
+      CXX: clang++
+      CBE_SANITIZE: "ON"
+      CBE_MUTATION: "0"
+      CBE_BUILD_DIR: verification/build/asan-ubsan
+      CBE_JUNIT: verification/build/junit-asan-ubsan.xml
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run test:cpp
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-asan-ubsan
+          path: verification/build/junit-*.xml

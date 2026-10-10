@@ -9,6 +9,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 option(CBE_SANITIZE "Build with AddressSanitizer + UndefinedBehaviorSanitizer" OFF)
+option(CBE_FUZZ "Build the libFuzzer target (clang only)" OFF)
 
 add_library(cbe_options INTERFACE)
 target_compile_options(cbe_options INTERFACE -Wall -Wextra -Wpedantic -Werror)
@@ -47,3 +48,20 @@ target_link_libraries(cbe_mutate PRIVATE tt cbe_options)
 
 add_executable(cbe_reduce tools/reduce.cpp)
 target_link_libraries(cbe_reduce PRIVATE cbe_options)
+
+add_executable(cbe_bench bench/bench_pq.cpp)
+target_link_libraries(cbe_bench PRIVATE cbe_options)
+
+# Same fuzz entry point, replayable with any compiler.
+add_executable(cbe_fuzz_replay fuzz/fuzz_diff.cpp fuzz/replay_main.cpp)
+target_link_libraries(cbe_fuzz_replay PRIVATE cbe_options)
+
+if(CBE_FUZZ)
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    message(FATAL_ERROR "CBE_FUZZ needs clang (libFuzzer)")
+  endif()
+  add_executable(cbe_fuzz fuzz/fuzz_diff.cpp)
+  target_compile_options(cbe_fuzz PRIVATE -fsanitize=fuzzer,address,undefined)
+  target_link_options(cbe_fuzz PRIVATE -fsanitize=fuzzer,address,undefined)
+  target_link_libraries(cbe_fuzz PRIVATE cbe_options)
+endif()
