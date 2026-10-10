@@ -26,8 +26,12 @@ export interface DijkstraStep {
 type Entry = { id: string; dist: number }
 
 /**
- * Min-priority queue backed by a sorted array. Insertion is O(n), but n is the
- * node count of a city map, so the constant factor beats a real heap here.
+ * Min-priority queue backed by a sorted array with binary-search insertion,
+ * chosen for simplicity. Insertion is O(n) because of the array shift. At this
+ * graph's 16 nodes the cost is negligible either way. A C++ benchmark
+ * (verification/README.md) found a binary heap as fast or faster at every size
+ * tested, and far faster on large graphs (100,000 nodes: about 14 ms vs 3.7 s).
+ * A heap is the better choice for anything larger than this map.
  */
 class SortedQueue {
   private items: Entry[] = []

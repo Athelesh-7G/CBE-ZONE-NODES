@@ -24,9 +24,13 @@ AI/ML course assignment.
 `lib/dijkstra.ts` implements Dijkstra's algorithm over an undirected, positively
 weighted graph of 16 nodes and 28 edges representing real Coimbatore localities
 and the approximate road distances between them. The frontier is a min-priority
-queue backed by a binary-insertion sorted array — O(n) insertion, but at this
-graph size that beats a real heap's constant factor — with stale queue entries
-skipped once a node is settled. Edge weights are integers from 2 to 10. See
+queue backed by a sorted array with binary-search insertion, chosen for simplicity
+(insertion is O(n) because of the array shift), with stale queue entries skipped once
+a node is settled. At 16 nodes the queue cost is negligible either way. A C++
+benchmark ([verification/README.md](verification/README.md)) found a binary heap as
+fast or faster at every size tested and far faster on large graphs (100,000 nodes:
+about 14 ms vs 3.7 s for the sorted array), so a heap is the right choice for anything
+larger than this map. Edge weights are integers from 2 to 10. See
 [Verification](#verification) for the tests that check the implementation.
 
 Note: the search stops as soon as the destination is settled, so `distances`
